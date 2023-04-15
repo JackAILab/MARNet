@@ -10,7 +10,7 @@ Jiehui Huang, Lishan Lin, Xuedong He, Fengcheng Yu, Wenhui Song, Jiaying Lin, Zh
 
 ## Network Architecture
 
-![](/Users/demac/Desktop/PDVedio论文最终润色/4.13最终润色/figures/fig2.png) 
+![](figures/img.png) 
 
 ## Installation
 
