@@ -33,7 +33,7 @@ Experiments are performed for different image processing tasks including, image 
 <summary><strong>Classification Prediction Results</strong> (click to expand) </summary>
 
 
- <center><img src="/Users/demac/Desktop/PDVedio论文最终润色/GitHub/MARNet/img1.png" style="zoom: 33%;" />
+ <center><img src="figures/img1.png" style="zoom: 33%;" />
 </details>
 
 
@@ -41,7 +41,7 @@ Experiments are performed for different image processing tasks including, image 
 <summary><strong>Ablation Experiment Results</strong> (click to expand) </summary></details>
 
 
-<img src="/Users/demac/Desktop/PDVedio论文最终润色/GitHub/MARNet/img2.png" style="zoom: 50%;" />
+<img src="figures/img2.png" style="zoom: 50%;" />
 
 
 ## Contact
