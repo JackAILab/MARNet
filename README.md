@@ -41,8 +41,8 @@ Experiments are performed for different image processing tasks including, image 
 <summary><strong>Ablation Experiment Results</strong> (click to expand) </summary></details>
 
 
-<img src="figures/img2.png" style="zoom: 50%;" />
-
+ <center><img src="figures/img2.png" style="zoom: 50%;" />
+<details>
 
 ## Contact
 
