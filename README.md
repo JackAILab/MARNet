@@ -1,7 +1,5 @@
 # Parkinson’s Severity Diagnosis Explainable Model Based on 3D Multi-Head Attention Residual Network
 
-Jiehui Huang, Lishan Lin, Xuedong He, Fengcheng Yu, Wenhui Song, Jiaying Lin, Zhenchao Tang, Kang Yuan, Yucheng Li, Haofan Huang, Wenbiao Xian, Zhong Pei, Calvin Yu-Chian Chen
-
 <hr />
 
 > The severity evaluation of Parkinson's disease (PD) is of great significance for the treatment of PD, and many methods have been proposed to solve this problem. However, existing methods either have limitations based on prior knowledge or are invasive methods that require wearable devices. In order to fill this research gap, we developed an explainable 3D multi-head attention residual convolution network. The proposed lightweight but effective model is expected to serve as a suitable end-to-end deep learning baseline in future research on PD video-based severity evaluation. 
