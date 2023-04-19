@@ -21,7 +21,7 @@ Training and Testing instructions for MARNet. Here is a summary table containing
 
 ## Results
 
-Experiments are performed for different image processing tasks including, image deraining, single-image motion deblurring, defocus deblurring (both on In our experiments, first, we test several different models on the same dataset. Second, we also performed binary classification tests on patients of different periods and compared their results. Third, we conducted a module ablation experiment for MARNet.
+In our experiments, first, we test several different models on the same dataset. Second, we also performed binary classification tests on patients of different periods and compared their results. Third, we conducted a module ablation experiment for MARNet.
 
 <details>
 <summary><strong>Classification Prediction Results</strong> (click to expand) </summary>
