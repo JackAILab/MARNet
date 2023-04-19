@@ -8,10 +8,6 @@ Jiehui Huang, Lishan Lin, Xuedong He, Fengcheng Yu, Wenhui Song, Jiaying Lin, Zh
 
 ***
 
-## Network Architecture
-
-![](figures/img.png) 
-
 ## Installation
 
 See [INSTALL.md](INSTALL.md) for the installation of dependencies required to run Restormer.
