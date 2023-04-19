@@ -168,6 +168,7 @@ class PReNet_LSTM(nn.Module):
             x = x.cuda() # BUG 11.14
 
         x_list = []
+        # here we can chose whether to use a loop for the followings codes
         x1 = x
         x = torch.cat((input, x), 1)
         x = self.conv0(x)
