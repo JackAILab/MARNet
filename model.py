@@ -3,7 +3,6 @@ from functools import partial
 import math
 from turtle import forward
 from typing_extensions import Self
-
 from torch.autograd import Variable
 
 import torch
