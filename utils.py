@@ -10,7 +10,6 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.models as models
 import torchvision.utils as vutils
-
 import logging
 from collections import OrderedDict
 from PIL import Image
