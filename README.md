@@ -1,8 +1,20 @@
 # Parkinson’s Severity Diagnosis Explainable Model Based on 3D Multi-Head Attention Residual Network
 
-<hr />
+![](./assets/1.png)
 
-> The severity evaluation of Parkinson's disease (PD) is of great significance for the treatment of PD, and many methods have been proposed to solve this problem. However, existing methods either have limitations based on prior knowledge or are invasive methods that require wearable devices. In order to fill this research gap, we developed an explainable 3D multi-head attention residual convolution network. The proposed lightweight but effective model is expected to serve as a suitable end-to-end deep learning baseline in future research on PD video-based severity evaluation. 
+## abstract
+
+The severity evaluation of Parkinson’s disease (PD) is of great significance for the treatment of PD. However,
+existing methods either have limitations based on prior knowledge or are invasive methods. To propose a more
+generalized severity evaluation model, this paper proposes an explainable 3D multi-head attention residual
+convolution network. First, we introduce the 3D attention-based convolution layer to extract video features.
+Second, features will be fed into LSTM and residual backbone networks, which can be used to capture the
+contextual information of the video. Finally, we design a feature compression module to condense the learned
+contextual features. We develop some interpretable experiments to better explain this black-box model so that it
+can be better generalized. Experiments show that our model can achieve state-of-the-art diagnosis performance.
+The proposed lightweight but effective model is expected to serve as a suitable end-to-end deep learning baseline
+in future research on PD video-based severity evaluation and has the potential for large-scale application in PD
+telemedicine. The source code is available at https://github.com/JackAILab/MARNet.
 
 ***
 
