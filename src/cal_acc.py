@@ -22,10 +22,10 @@ class MyAverageMeter:
     
 class GetTarget:
     def __init__(self):
-        self.TP = 0 # 真正
-        self.FP = 0 # 假正
-        self.TN = 0 # 真反
-        self.FN = 0 # 假反 
+        self.TP = 0 
+        self.FP = 0 
+        self.TN = 0 
+        self.FN = 0  
     def insert(self, pair):
         true = pair[0]
         pred = pair[1]

@@ -15,7 +15,7 @@ from metrics import f1_score
 def get_inplanes():
     return [64, 128, 256, 512] 
 
-# 输入通道数只能在这里面取
+
 
 
 
@@ -55,46 +55,33 @@ class SEModule(nn.Module):
         return input * x
 
 
-"""这里添加了注意力机制类"""
+
 class ChannelAttention(nn.Module):
     def __init__(self,inplanes,ratio=16):
         super(ChannelAttention,self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool3d(1)
         self.max_pool = nn.AdaptiveMaxPool3d(1)
 
-        self.fc1 = nn.Conv3d(inplanes,inplanes//16,1,bias=False) # 本来是2的改成3了
+        self.fc1 = nn.Conv3d(inplanes,inplanes//16,1,bias=False) 
         self.relu1=nn.ReLU()
         self.fc2=nn.Conv3d(inplanes//16,inplanes,1,bias=False)
 
         self.sigmoid=nn.Sigmoid()
 
     def forward(self,x):
-        # avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+
         avg_out = self.avg_pool(x)
-        
-        # 第一次提取信息是用平均池化 -- 背景信息
+
         avg_out = self.fc1(avg_out)
-        avg_out = self.relu1(avg_out) # 第一次提取信息 把重点抽取出来 -- 再把图片放大
+        avg_out = self.relu1(avg_out) 
         avg_out = self.fc2(avg_out)
         
-        # 这边打算变化一下维度看下效果
-        '''
-        tran_out = x.transpose(2,3)
-        tran_out = self.max_pool(tran_out)
-        tran_out = self.fc1(tran_out)
-        tran_out = self.relu1(tran_out)
-        tran_out = self.fc2(tran_out)
-        '''
-        # max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
-        # 第二次提取信息是最大池化 -- 特征信息
-        # 感觉不要提取背景信息了 -- 没啥用
+
         max_out = self.max_pool(x)
         max_out = self.fc1(max_out)
         max_out = self.relu1(max_out)
         max_out = self.fc2(max_out)
-        
-        # out = avg_out + max_out
-        # tran_out = tran_out.transpose(2,3)
+
         out = avg_out + max_out
         return self.sigmoid(out)
 
@@ -104,7 +91,7 @@ class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
         super(SpatialAttention, self).__init__()
 
-        assert kernel_size in (3, 7), 'kernel size must be 3 or 7'
+        assert kernel_size in (3, 7)
         padding = 3 if kernel_size == 7 else 1
 
         self.conv1 = nn.Conv3d(2, 1, kernel_size, padding=padding, bias=False)
@@ -116,9 +103,9 @@ class SpatialAttention(nn.Module):
         x = torch.cat([avg_out, max_out], dim=1)
         x = self.conv1(x)
         return self.sigmoid(x)
-"""这里添加了注意力机制类"""
 
-"""这里添加了LSTM"""
+
+
 class PReNet_LSTM(nn.Module):
     def __init__(self, recurrent_iter=6, use_GPU=True):
         super(PReNet_LSTM, self).__init__()
@@ -126,7 +113,7 @@ class PReNet_LSTM(nn.Module):
         self.use_GPU = use_GPU
 
         self.conv0 = nn.Sequential(
-            nn.Conv3d(128, 32, 3, 1, 1),  # BUG 10.22 - 0:10
+            nn.Conv3d(128, 32, 3, 1, 1),  
             nn.ReLU()
             )
         self.res_conv1 = nn.Sequential(
@@ -176,57 +163,39 @@ class PReNet_LSTM(nn.Module):
             nn.Sigmoid()
             )
         self.conv = nn.Sequential(
-            nn.Conv3d(32, 64, 3, 1, 1), #BUG 1109
+            nn.Conv3d(32, 64, 3, 1, 1),
             )
 
     def forward(self, input):
         batch_size, row, col = input.size(0), input.size(2), input.size(3)
 
         x = input
-        
-        # h = Variable(torch.zeros(batch_size, 32, row, col))
-        # c = Variable(torch.zeros(batch_size, 32, row, col))
+
         h = Variable(torch.zeros(batch_size, 32, row, col, col))
         c = Variable(torch.zeros(batch_size, 32, row, col, col))
 
         if self.use_GPU:
             h = h.cuda()
             c = c.cuda()
-            x = x.cuda() # BUG 11.14
+            x = x.cuda() 
 
         x_list = []
-        # 1112 -- 不循环 -- 走一遍
-        # for i in range(self.iteration):
-        # img=img.unsqueeze(0) 对齐维数
+ 
         x1 = x
-        x = torch.cat((input, x), 1) # 拼接的维度应该是2上
+        x = torch.cat((input, x), 1) 
         x = self.conv0(x)
-
-        x = torch.cat((x, h), 1) # 这里出问题的原因就是x和h的维度对不上
-        
+        x = torch.cat((x, h), 1)
         i = self.conv_i(x)
         f = self.conv_f(x)
         g = self.conv_g(x)
         o = self.conv_o(x)
         c = f * c + i * g
         h = o * torch.tanh(c)
-
-        # 看下残差有没有提升
-        # 没有就不加了
         x = h
         resx = x
         x = F.relu(self.res_conv1(x) + resx)
-        # resx = x
-        # x = F.relu(self.res_conv2(x) + resx)
-        # resx = x
-        # x = F.relu(self.res_conv3(x) + resx)
-        # resx = x
-        # x = F.relu(self.res_conv4(x) + resx)
-        # resx = x
-        # x = F.relu(self.res_conv5(x) + resx)
-        x = self.conv(x) # 出来之后还是要维持64 -- 要不就不卷这一层
-        # x_list.append(x)
-        return x #,x_list
+        x = self.conv(x) 
+        return x 
     
     
 """这里添加了LSTM"""
@@ -319,36 +288,31 @@ class ResNet(nn.Module):
                  shortcut_type='B',
                  widen_factor=1.0,
                  n_classes=400):
-        super().__init__() # 构造父类
+        super().__init__()
 
-        block_inplanes = [int(x * widen_factor) for x in block_inplanes] # <list>类型 
-        # print(block_inplanes) #[64, 128, 256, 512]
-        self.in_planes = block_inplanes[0] # <int>
-        self.no_max_pool = no_max_pool #
+        block_inplanes = [int(x * widen_factor) for x in block_inplanes]
+        self.in_planes = block_inplanes[0]
+        self.no_max_pool = no_max_pool 
 
-        # nn.Conv3d -- 3D卷积
-        # 卷积的主要目的是为了从输入图像中提取特征
+
         self.conv1 = nn.Conv3d(n_input_channels,
                                self.in_planes,
-                               kernel_size=(conv1_t_size, 7, 7), # 卷积核大小
-                               stride=(conv1_t_stride, 2, 2), # 步长
-                               padding=(conv1_t_size // 2, 3, 3), # 步长
+                               kernel_size=(conv1_t_size, 7, 7), 
+                               stride=(conv1_t_stride, 2, 2), 
+                               padding=(conv1_t_size // 2, 3, 3), 
                                bias=False)
         self.bn1 = nn.BatchNorm3d(self.in_planes) 
         self.relu = nn.ReLU(inplace=True)
 
-        '''在网络的第一层加入注意力机制'''
+
         self.ca=ChannelAttention(self.in_planes)
         self.sa = SpatialAttention()
-        '''加入LSTM'''
+
         self.lstm=PReNet_LSTM(self.in_planes)
 
 
         self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
-        # layer其实就是图上的stage -- 每一层
-        # 这里是核心部分
-        # [64, 128, 256, 512]
-        # model = ResNet(Bottleneck, [3, 4, 23, 3], get_inplanes(), **kwargs)
+
         self.layer1 = self._make_layer(block, block_inplanes[0], layers[0],
                                        shortcut_type)
         self.layer2 = self._make_layer(block,
@@ -368,22 +332,21 @@ class ResNet(nn.Module):
                                        stride=2)
         self.ca1=ChannelAttention(self.in_planes)
         self.sa1 = SpatialAttention()
-        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1)) # 平均池化
-        self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)# 展平
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1)) 
+        self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
         self.pro = nn.Softmax(dim = 1) 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                # 如果是卷积层 -- 凯明初始化
                 nn.init.kaiming_normal_(m.weight,
                                         mode='fan_out',
                                         nonlinearity='relu')
-                # 如果是bn层 -- 常量初始化
+
             elif isinstance(m, nn.BatchNorm3d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
         print()
     
-    # 基础下采样模块
+
     def _downsample_basic_block(self, x, planes, stride):
         out = F.avg_pool3d(x, kernel_size=1, stride=stride)
         zero_pads = torch.zeros(out.size(0), planes - out.size(1), out.size(2),
@@ -395,11 +358,9 @@ class ResNet(nn.Module):
 
         return out
 
-    # 开始定义makelayer
-    """重点"""
+
     def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
         downsample = None
-        # 判断是否需要下采样
         if stride != 1 or self.in_planes != planes * block.expansion:
             if shortcut_type == 'A':
                 downsample = partial(self._downsample_basic_block,
@@ -421,50 +382,42 @@ class ResNet(nn.Module):
             layers.append(block(self.in_planes, planes))
 
         return nn.Sequential(*layers)
-    def output_img(self,x,it):
-        img = x.cpu().detach().numpy()
-        img = img[0,0,0,:,:]
-        file_name = f'/home/huangjiehui/Project/PDAnalysis/yufc/ans/net_img/img{it}.png'
-        cv2.imwrite(file_name,img)
-    def forward(self, x): # 这一层是网络结构里面最重要的层
-        # self.output_img(x,1)
-        x = self.conv1(x) # BUG 将numpy转化为float32，解决volume.astype(np.float32)
-        # 这里可以堆叠多几层
+
+    def forward(self, x): 
+
+        x = self.conv1(x) 
+
         x = self.bn1(x)
         x = self.relu(x)
-        self.x_origin = x # 输出origin特征,做差异性loss ([12, 64, 10, 128, 128])
-        '''lstm'''
-        x = self.relu(self.lstm(x)+x) #  x = self.lstm(x)+x 利用残差结构,这里的x不能丢掉 ([12, 64, 10, 128, 128]) 再考虑一下返回一个变量进行loss
-        # 1127_1557考虑额外加一个 ReLu out = self.relu(out)
-        self.x_lstm = x # 输出lstm特征,做差异性&相似性loss
-        '''注意力机制'''
+        self.x_origin = x 
+
+        x = self.relu(self.lstm(x)+x) 
+        self.x_lstm = x 
+
         x = self.ca(x) * x
-        self.x_ca = x # 输出ca_attention特征,做相似性loss ([12, 64, 10, 128, 128])
+        self.x_ca = x 
         x = self.sa(x) * x
-        self.x_sa = x # 输出sa_attention特征,做相似性loss ([12, 64, 10, 128, 128])
-        # import pdb
-        # pdb.set_trace()
+        self.x_sa = x 
         if not self.no_max_pool:
             x = self.maxpool(x)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x) # 引入先验知识！
-        '''注意力机制'''
+        x = self.layer4(x) 
+
         x = self.ca1(x) * x
         x = self.sa1(x) * x
         x = self.maxpool(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        x = self.pro(x) # ([12, 2])
-        return x # 这里考虑多返回几个变量,做多层次loss
+        x = self.pro(x)
+        return x 
 
 
 def generate_model(model_depth, **kwargs):
     assert model_depth in [10, 18, 34, 50, 101, 152, 200]
-    # 模型的深度
-    # BasicBlock和Bottleneck？
+
     if model_depth == 10:
         model = ResNet(BasicBlock, [1, 1, 1, 1], get_inplanes(), **kwargs)
     elif model_depth == 18:
@@ -484,9 +437,6 @@ def generate_model(model_depth, **kwargs):
 
 if __name__ == '__main__':
     model = generate_model(model_depth=10, n_input_channels=1, n_classes=2)
-    # print(model)
-
-    # x = torch.randn(4, 1, 64, 224, 224)
     x = torch.randn(4, 1, 64, 224, 224)
     res = model(x)
     print(res.shape)

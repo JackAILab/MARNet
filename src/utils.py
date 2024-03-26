@@ -19,7 +19,7 @@ import numpy as np
 import cv2
 import re
 
-#=============================== Jack Add new ========================================
+
 import numpy as np
 from torch.autograd import Function
 import torch.nn as nn
@@ -28,13 +28,13 @@ import torch.nn.functional as F
 
 import torch
 
-class DiffLoss(nn.Module): # 丢弃之前的向量化diff,不然会存在爆显存的问题
+class DiffLoss(nn.Module): 
     def __init__(self):
         super(DiffLoss, self).__init__()
 
-    def forward(self, input1, input2): # # ([12, 64, 10, 128, 128])
-        # 在时序维度上计算差异性
-        diff_loss = torch.mean((input1 - input2).pow(2), dim=(0, 2, 3, 4))  # 这里假设视频数据的时序维度是第二个维度
+    def forward(self, input1, input2): 
+
+        diff_loss = torch.mean((input1 - input2).pow(2), dim=(0, 2, 3, 4))  
         return diff_loss.mean()
 
 class SimilarityKL(torch.nn.Module):
@@ -51,10 +51,8 @@ class SimilarityKL(torch.nn.Module):
 
     def forward(self, input1, input2, input3):
         
-        # import pdb
-        # pdb.set_trace()
-        # Similarity measured by KL
-        if self.loss_similarity == 'KL': # KL散度容易崩,会nan,使用Cosine更稳
+
+        if self.loss_similarity == 'KL': 
             loss_similarityv_a = 0.5 * (self.similarity_loss(input1, input2).mean() + self.similarity_loss(input2, input1).mean())
             loss_similarityv_t = 0.5 * (self.similarity_loss(input1, input3).mean() + self.similarity_loss(input3, input1).mean())
             loss_similaritya_t = 0.5 * (self.similarity_loss(input3, input2).mean() + self.similarity_loss(input2, input3).mean())
@@ -75,8 +73,6 @@ class SimilarityKL(torch.nn.Module):
 
         loss_all = loss_similarity
         return loss_all
-
-#=============================== Jack Add new ========================================
 
 
 def show_cam_on_image(img, mask):
@@ -470,57 +466,7 @@ def log_parse(log_path, keyword="val_dice", index="epoch"):
     best_result = sorted(keyword_list)[::-1][0]
 
     return best_result
-''' # 展示还用不上此函数 2022.09.07
-def make_dot(var, params=None):
-  """ Produces Graphviz representation of PyTorch autograd graph
-  Blue nodes are the Variables that require grad, orange are Tensors
-  saved for backward in torch.autograd.Function
-  Args:
-    var: output Variable
-    params: dict of (name, Variable) to add names to node that
-      require grad (TODO: make optional)
-  """
-  if params is not None:
-    assert isinstance(params.values()[0], Variable)
-    param_map = {id(v): k for k, v in params.items()}
-  
-  node_attr = dict(style='filled',
-           shape='box',
-           align='left',
-           fontsize='12',
-           ranksep='0.1',
-           height='0.2')
-  dot = Digraph(node_attr=node_attr, graph_attr=dict(size="12,12"))
-  seen = set()
-  
-  def size_to_str(size):
-    return '('+(', ').join(['%d' % v for v in size])+')'
-  
-  def add_nodes(var):
-    if var not in seen:
-      if torch.is_tensor(var):
-        dot.node(str(id(var)), size_to_str(var.size()), fillcolor='orange')
-      elif hasattr(var, 'variable'):
-        u = var.variable
-        name = param_map[id(u)] if params is not None else ''
-        node_name = '%s\n %s' % (name, size_to_str(u.size()))
-        dot.node(str(id(var)), node_name, fillcolor='lightblue')
-      else:
-        dot.node(str(id(var)), str(type(var).__name__))
-      seen.add(var)
-      if hasattr(var, 'next_functions'):
-        for u in var.next_functions:
-          if u[0] is not None:
-            dot.edge(str(id(u[0])), str(id(var)))
-            add_nodes(u[0])
-      if hasattr(var, 'saved_tensors'):
-        for t in var.saved_tensors:
-          dot.edge(str(id(t)), str(id(var)))
-          add_nodes(t)
-  add_nodes(var.grad_fn)
 
-  return dot
-'''
 def create_dir(dir_list):
     assert  isinstance(dir_list, list) == True
     for d in dir_list:
