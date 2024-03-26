@@ -3,6 +3,7 @@ from functools import partial
 import math
 from turtle import forward
 from typing_extensions import Self
+
 from torch.autograd import Variable
 
 import torch
@@ -15,6 +16,10 @@ def get_inplanes():
     return [64, 128, 256, 512] 
 
 
+
+
+
+
 def conv3x3x3(in_planes, out_planes, stride=1):
     return nn.Conv3d(in_planes,
                      out_planes,
@@ -22,6 +27,7 @@ def conv3x3x3(in_planes, out_planes, stride=1):
                      stride=stride,
                      padding=1,
                      bias=False)
+
 
 def conv1x1x1(in_planes, out_planes, stride=1):
     return nn.Conv3d(in_planes,
@@ -31,7 +37,7 @@ def conv1x1x1(in_planes, out_planes, stride=1):
                      bias=False)
 
 
-# SEBlock
+#SEBlock
 class SEModule(nn.Module):
     def __init__(self, channels, bottleneck=128):
         super(SEModule, self).__init__()
@@ -49,37 +55,43 @@ class SEModule(nn.Module):
         return input * x
 
 
-# ChannelAttentionBlock
+
 class ChannelAttention(nn.Module):
     def __init__(self,inplanes,ratio=16):
         super(ChannelAttention,self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool3d(1)
         self.max_pool = nn.AdaptiveMaxPool3d(1)
 
-        self.fc1 = nn.Conv3d(inplanes,inplanes//16,1,bias=False)
+        self.fc1 = nn.Conv3d(inplanes,inplanes//16,1,bias=False) 
         self.relu1=nn.ReLU()
         self.fc2=nn.Conv3d(inplanes//16,inplanes,1,bias=False)
 
         self.sigmoid=nn.Sigmoid()
 
     def forward(self,x):
+
         avg_out = self.avg_pool(x)
+
         avg_out = self.fc1(avg_out)
-        avg_out = self.relu1(avg_out)
+        avg_out = self.relu1(avg_out) 
         avg_out = self.fc2(avg_out)
+        
+
         max_out = self.max_pool(x)
         max_out = self.fc1(max_out)
         max_out = self.relu1(max_out)
         max_out = self.fc2(max_out)
+
         out = avg_out + max_out
         return self.sigmoid(out)
 
-# SpatialAttention
+
+
 class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
         super(SpatialAttention, self).__init__()
 
-        assert kernel_size in (3, 7), 'kernel size must be 3 or 7'
+        assert kernel_size in (3, 7)
         padding = 3 if kernel_size == 7 else 1
 
         self.conv1 = nn.Conv3d(2, 1, kernel_size, padding=padding, bias=False)
@@ -92,7 +104,8 @@ class SpatialAttention(nn.Module):
         x = self.conv1(x)
         return self.sigmoid(x)
 
-# LSTMBlock
+
+
 class PReNet_LSTM(nn.Module):
     def __init__(self, recurrent_iter=6, use_GPU=True):
         super(PReNet_LSTM, self).__init__()
@@ -100,7 +113,7 @@ class PReNet_LSTM(nn.Module):
         self.use_GPU = use_GPU
 
         self.conv0 = nn.Sequential(
-            nn.Conv3d(128, 32, 3, 1, 1),
+            nn.Conv3d(128, 32, 3, 1, 1),  
             nn.ReLU()
             )
         self.res_conv1 = nn.Sequential(
@@ -150,30 +163,28 @@ class PReNet_LSTM(nn.Module):
             nn.Sigmoid()
             )
         self.conv = nn.Sequential(
-            nn.Conv3d(32, 64, 3, 1, 1), 
+            nn.Conv3d(32, 64, 3, 1, 1),
             )
 
     def forward(self, input):
         batch_size, row, col = input.size(0), input.size(2), input.size(3)
 
         x = input
-    
+
         h = Variable(torch.zeros(batch_size, 32, row, col, col))
         c = Variable(torch.zeros(batch_size, 32, row, col, col))
 
         if self.use_GPU:
             h = h.cuda()
             c = c.cuda()
-            x = x.cuda() # BUG 11.14
+            x = x.cuda() 
 
         x_list = []
-        # here we can chose whether to use a loop for the followings codes
+ 
         x1 = x
-        x = torch.cat((input, x), 1)
+        x = torch.cat((input, x), 1) 
         x = self.conv0(x)
-
         x = torch.cat((x, h), 1)
-        
         i = self.conv_i(x)
         f = self.conv_f(x)
         g = self.conv_g(x)
@@ -183,22 +194,15 @@ class PReNet_LSTM(nn.Module):
         x = h
         resx = x
         x = F.relu(self.res_conv1(x) + resx)
-        resx = x
-        x = F.relu(self.res_conv2(x) + resx)
-        resx = x
-        x = F.relu(self.res_conv3(x) + resx)
-        resx = x
-        x = F.relu(self.res_conv4(x) + resx)
-        resx = x
-        x = F.relu(self.res_conv5(x) + resx)
-        x = self.conv(x)
-        x_list.append(x)
+        x = self.conv(x) 
         return x 
     
+    
+"""这里添加了LSTM"""
 
-# ResNet
 class BasicBlock(nn.Module):
     expansion = 1
+
     def __init__(self, in_planes, planes, stride=1, downsample=None):
         super().__init__()
 
@@ -209,6 +213,9 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm3d(planes)
         self.downsample = downsample
         self.stride = stride
+        # 注意力机制
+
+
     def forward(self, x):
         residual = x
 
@@ -268,6 +275,7 @@ class Bottleneck(nn.Module):
 
         return out
 
+# import torch.nn as nn
 class ResNet(nn.Module):
     def __init__(self,
                  block,
@@ -280,27 +288,31 @@ class ResNet(nn.Module):
                  shortcut_type='B',
                  widen_factor=1.0,
                  n_classes=400):
-        super().__init__() 
+        super().__init__()
 
-        block_inplanes = [int(x * widen_factor) for x in block_inplanes] 
-        self.in_planes = block_inplanes[0] 
+        block_inplanes = [int(x * widen_factor) for x in block_inplanes]
+        self.in_planes = block_inplanes[0]
         self.no_max_pool = no_max_pool 
+
+
         self.conv1 = nn.Conv3d(n_input_channels,
                                self.in_planes,
-                               kernel_size=(conv1_t_size, 7, 7),
+                               kernel_size=(conv1_t_size, 7, 7), 
                                stride=(conv1_t_stride, 2, 2), 
                                padding=(conv1_t_size // 2, 3, 3), 
                                bias=False)
         self.bn1 = nn.BatchNorm3d(self.in_planes) 
         self.relu = nn.ReLU(inplace=True)
 
-        # the attention blocks and the lstm block
+
         self.ca=ChannelAttention(self.in_planes)
         self.sa = SpatialAttention()
+
         self.lstm=PReNet_LSTM(self.in_planes)
 
 
         self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
+
         self.layer1 = self._make_layer(block, block_inplanes[0], layers[0],
                                        shortcut_type)
         self.layer2 = self._make_layer(block,
@@ -320,28 +332,33 @@ class ResNet(nn.Module):
                                        stride=2)
         self.ca1=ChannelAttention(self.in_planes)
         self.sa1 = SpatialAttention()
-
-
-        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1)) 
         self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
         self.pro = nn.Softmax(dim = 1) 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
                 nn.init.kaiming_normal_(m.weight,
                                         mode='fan_out',
-                                        nonlinearity='relu') 
+                                        nonlinearity='relu')
+
             elif isinstance(m, nn.BatchNorm3d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
         print()
+    
+
     def _downsample_basic_block(self, x, planes, stride):
         out = F.avg_pool3d(x, kernel_size=1, stride=stride)
         zero_pads = torch.zeros(out.size(0), planes - out.size(1), out.size(2),
                                 out.size(3), out.size(4))
         if isinstance(out.data, torch.cuda.FloatTensor):
             zero_pads = zero_pads.cuda()
+
         out = torch.cat([out.data, zero_pads], dim=1)
+
         return out
+
+
     def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
         downsample = None
         if stride != 1 or self.in_planes != planes * block.expansion:
@@ -365,19 +382,29 @@ class ResNet(nn.Module):
             layers.append(block(self.in_planes, planes))
 
         return nn.Sequential(*layers)
+
     def forward(self, x): 
-        x = self.conv1(x)
+
+        x = self.conv1(x) 
+
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.lstm(x)
+        self.x_origin = x 
+
+        x = self.relu(self.lstm(x)+x) 
+        self.x_lstm = x 
+
         x = self.ca(x) * x
+        self.x_ca = x 
         x = self.sa(x) * x
+        self.x_sa = x 
         if not self.no_max_pool:
             x = self.maxpool(x)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x)
+        x = self.layer4(x) 
+
         x = self.ca1(x) * x
         x = self.sa1(x) * x
         x = self.maxpool(x)
@@ -385,11 +412,12 @@ class ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         x = self.pro(x)
-        return x
+        return x 
 
 
 def generate_model(model_depth, **kwargs):
     assert model_depth in [10, 18, 34, 50, 101, 152, 200]
+
     if model_depth == 10:
         model = ResNet(BasicBlock, [1, 1, 1, 1], get_inplanes(), **kwargs)
     elif model_depth == 18:
@@ -406,3 +434,9 @@ def generate_model(model_depth, **kwargs):
         model = ResNet(Bottleneck, [3, 24, 36, 3], get_inplanes(), **kwargs)
 
     return model
+
+if __name__ == '__main__':
+    model = generate_model(model_depth=10, n_input_channels=1, n_classes=2)
+    x = torch.randn(4, 1, 64, 224, 224)
+    res = model(x)
+    print(res.shape)

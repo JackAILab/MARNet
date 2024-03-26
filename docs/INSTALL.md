@@ -40,6 +40,6 @@ These saved data paths and their labels should be written into **Data/TrainData.
 
 The following are template examples for Data/TrainData.csv and Data/TestData.csv.
 
-<img src="figures/img3.png" alt="image-20230415120136808" style="zoom:33%;" />
+![](../assets/data_example.png)
 
-tips: The length of the string needs to be consistent with the example.
+tips: In the code, in order to write the h5f file, I encoded the name of each patient, and the encoding rules were designed by myself. Therefore, when running this project, it is necessary to design the file path, patient name, and encoding rules in order for the project to run normally.

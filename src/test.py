@@ -1,31 +1,39 @@
 
 from utils import *
-from dataset_h5f import BasicDataset
+from dataset_h5f import BasicDataset, scipy_rotate
 from h5fMake import preparePDData
 from cal_acc import MyAverageMeter
 from curses.ascii import isdigit
 from metrics import Multi_accuracy
 from metrics import *
+from torch.optim.lr_scheduler import MultiStepLR
 import pandas as pd 
 import torchvision.transforms.functional as TF
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torch.nn as nn 
 import math
 import argparse
+from optparse import Option
 from email import parser
 import torch
 import os
 from sklearn import metrics
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# You can choose to specify a graphics card here
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
-torch.backends.cudnn.enabled = False
+torch.backends.cudnn.enabled = False  
 
+
+exp_number = 'lstm-sa'
+
+log_save_path = f'/home/huangjiehui/Project/PDAnalysis/ReviseStage/XiaoRong/test/'
+model_save_path = f'/home/huangjiehui/Project/PDAnalysis/ReviseStage/XiaoRong/run/{exp_number}/'
+os.system("mkdir -p " + log_save_path)
 
 def code2name(code):
     _code = str(code)
+
     code = ''
     for i in range(0, len(_code)):
         if isdigit(_code[i]):
@@ -49,21 +57,19 @@ def code2name(code):
     return name
 
 
-# testing function
 def eval(model, eval_loader, criterion):
     model.eval()
-
-    running_loss = MyAverageMeter()
-    running_acc = MyAverageMeter()
-
-    iterator = 0
-    ouput_info_step = 30
-    print_epoch = 0
-    f = open('./ResDir/TestAcc.txt','w')
-    f_each = open('./ResDir/TestLog.txt','w')
-    from cal_acc import GetTarget
-    target = GetTarget()
+    
+    acc_list = []
+    loss_list = []
+    
+    f_each = open(log_save_path + f"{exp_number}_res.txt",'w')
+    
+    cnt = 0
     for data in eval_loader:
+        print(f'     {cnt}/{len(eval_loader)}', end='\r')
+        cnt += 1
+        
         image, label, name = data
         image = image.cuda()
         label = label.cuda()
@@ -76,47 +82,24 @@ def eval(model, eval_loader, criterion):
             loss = criterion(logit, label)
             pred = torch.argmax(logit, dim=-1)
             posibility_list = logit.cpu().detach().numpy()
-            # ----- Output prediction information ----- #
-            for i in range(0, len(name)): 
+            for i in range(0, len(name)):  
                 msg = f'{name_list[i]},{str(label[i].cpu().numpy())},{str(pred[i].cpu().numpy())}, {posibility_list[i]}'
                 f_each.write(msg+'\n')
             acc = accuracy(label.cpu().numpy(), pred.cpu().numpy())
-        running_loss.update(loss.item(), image.size(0))
-        running_acc.update(acc, image.size(0))
-        
-        # get targets
-        true_ = label.cpu().numpy().tolist()
-        pred_ = pred.cpu().numpy().tolist()
-        for i in range(0,len(true_)):
-            target.insert([true_[i],pred_[i]])
-        
-        
-        cur_loss = running_loss.get_average()
-        cur_acc = running_acc.get_average()
-        if iterator % ouput_info_step == 0:
-            print_epoch += 1
-            msg = f'epoch: {print_epoch}, loss: {cur_loss}, acc: {cur_acc}'
-            print(msg)
-            f.write(msg+'\n')
-        iterator += 1
-    epoch_loss = running_loss.get_average()
-    epoch_acc = running_acc.get_average()
-    running_loss.reset()
-    running_acc.reset()
+
+        loss_list.append(loss.item())
+        acc_list.append(acc)
     
-    epoch_recall = target.getRecall()
-    epoch_precision = target.getPrec()
-    epoch_sen = target.getSPE()
-    epoch_F1 = target.getF1()
-    
-    model.train()
-    return epoch_loss, epoch_acc,epoch_recall,epoch_precision,epoch_sen,epoch_F1
+    epoch_loss = sum(loss_list) / len(loss_list)
+    epoch_acc = sum(acc_list) / len(acc_list)
+
+    return epoch_loss, epoch_acc
 
 
 
-# load data
+
 df2 = pd.read_csv(
-    './Data/TestData.csv')
+    '/home/huangjiehui/Project/PDAnalysis/ReviseStage/XiaoRong/data/new_02_test.csv')
 df2_shuffle = df2.sample(frac=1, random_state=100)
 df_test = df2_shuffle
 
@@ -124,41 +107,43 @@ test_data_path = list(df_test['data_path'])
 test_labels = list(df_test['label_list'])
 
 
-print()
 
 train_transform = None  
 test_transform = None
 
-# ================ H5f file for rewriting data ================ #
+
 # preparePDData(data_path = test_data_path, patch_size=256, stride=256 ,data_type='test')
 # print("prepare_test_PDData successful!")
 # exit()
 
+
 test_set = BasicDataset(test_data_path, test_labels, 'test', test_transform)
-test_loader = DataLoader(test_set, batch_size = 1, shuffle=False, num_workers=1)
+test_loader = DataLoader(test_set, batch_size = 10, shuffle=False, num_workers=1)
 print("Data Load success!")
 
 
-f = open('ResDir/AllEpochAcc.txt','a')
-start = 90
-end = 1501
+f = open(log_save_path + "test_result.txt",'a')
 
-# Import all. pth files in a loop and test all existing models
-for modelEpoch in range(630,631,60):
-    # load model
-    model = torch.load(f'./ModelLog/model_e_{modelEpoch}.pth')
-    # Model parameter settings
+from model_lstm_sa import generate_model
+
+keys = [0, 3, 6, 9, 12]
+for i in range(0, len(keys)):
+    model = generate_model(model_depth=101, n_input_channels=1, n_classes=2).cuda()
+    model_save_root_path = f'/home/huangjiehui/Project/PDAnalysis/ReviseStage/XiaoRong/run/lstm-sa/{keys[i]}.pt'
+    model.load_state_dict(torch.load(model_save_root_path))
+
+
     parser = argparse.ArgumentParser(description="JackNet_Train")
     parser.add_argument("--milestone", type=int,
                         default=[30, 50, 80], help="When to decay learning rate")
     opt = parser.parse_args()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=1e-4)
     scheduler = optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=opt.milestone, gamma=0.2)
+        optimizer, milestones=opt.milestone, gamma=0.2)  
 
     print("begin to test...")
-    test_loss, test_acc,test_recall,test_precision , sen, F1= eval(model, test_loader, criterion)
-    msg = f'model Epoch: {modelEpoch}, test_loss: {test_loss}, test_acc: {test_acc},test_recall:{test_recall},test_precision:{test_precision}, test_sen: {sen}, test_f1: {F1}'
+    test_loss, test_acc = eval(model, test_loader, criterion)
+
+    msg = f'name: {exp_number}, epoch: {keys[i]}, test_loss: {test_loss}, test_acc: {test_acc}'
     f.write(msg+'\n')
     print(msg)

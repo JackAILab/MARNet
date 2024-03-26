@@ -10,12 +10,70 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.models as models
 import torchvision.utils as vutils
+# from graphviz import Digraph
+
 import logging
 from collections import OrderedDict
 from PIL import Image
 import numpy as np
 import cv2
 import re
+
+
+import numpy as np
+from torch.autograd import Function
+import torch.nn as nn
+import torch
+import torch.nn.functional as F
+
+import torch
+
+class DiffLoss(nn.Module): 
+    def __init__(self):
+        super(DiffLoss, self).__init__()
+
+    def forward(self, input1, input2): 
+
+        diff_loss = torch.mean((input1 - input2).pow(2), dim=(0, 2, 3, 4))  
+        return diff_loss.mean()
+
+class SimilarityKL(torch.nn.Module):
+    def __init__(self, loss_similarity='Cosine', gamma=0.5):
+        super(SimilarityKL, self).__init__()
+        self.loss_similarity, self.gamma  = loss_similarity, gamma
+
+        if loss_similarity == 'KL':
+            self.similarity_loss = F.kl_div
+        elif loss_similarity == 'Cosine':
+            self.similarity_loss = nn.CosineSimilarity(dim=-1)
+        else:
+            raise NotImplementedError
+
+    def forward(self, input1, input2, input3):
+        
+
+        if self.loss_similarity == 'KL': 
+            loss_similarityv_a = 0.5 * (self.similarity_loss(input1, input2).mean() + self.similarity_loss(input2, input1).mean())
+            loss_similarityv_t = 0.5 * (self.similarity_loss(input1, input3).mean() + self.similarity_loss(input3, input1).mean())
+            loss_similaritya_t = 0.5 * (self.similarity_loss(input3, input2).mean() + self.similarity_loss(input2, input3).mean())
+
+            loss_similarityv_a = 0 if torch.isnan(loss_similarityv_a) else loss_similarityv_a
+            loss_similarityv_t = 0 if torch.isnan(loss_similarityv_t) else loss_similarityv_t
+            loss_similaritya_t = 0 if torch.isnan(loss_similaritya_t) else loss_similaritya_t
+
+            loss_similarity = (loss_similaritya_t + loss_similarityv_a + loss_similarityv_t) / 3.0
+
+        elif self.loss_similarity == 'Cosine':
+            loss_similarityv_a = 1.0 - self.similarity_loss(input1, input2).mean()
+            loss_similarityv_t = 1.0 - self.similarity_loss(input1, input3).mean()
+            loss_similaritya_t = 1.0 - self.similarity_loss(input2, input3).mean()
+            loss_similarity = (loss_similaritya_t + loss_similarityv_a + loss_similarityv_t) / 3.0
+        else:
+            raise NotImplementedError
+
+        loss_all = loss_similarity
+        return loss_all
+
 
 def show_cam_on_image(img, mask):
     heatmap = cv2.applyColorMap(np.uint8(255 * mask), cv2.COLORMAP_JET)
@@ -408,6 +466,7 @@ def log_parse(log_path, keyword="val_dice", index="epoch"):
     best_result = sorted(keyword_list)[::-1][0]
 
     return best_result
+
 def create_dir(dir_list):
     assert  isinstance(dir_list, list) == True
     for d in dir_list:

@@ -6,7 +6,7 @@ from scipy import ndimage
 import torch
 import pandas as pd
 import matplotlib.pyplot as plt
-from datas import* 
+from datas import*  #sss
 import os
 import h5py
 
@@ -22,13 +22,13 @@ def scipy_rotate(volume):
     return volume
 
 # =============================== train_data_h5f_path =============================== #
-train_save_data_path = r'H5fData/train_Data.he5'
-train_save_label_path = r'H5fData/train_Data_label.he5' 
-train_save_patient_name_path = r'H5fData/train_name_label.he5' 
-# =============================== test_data_h5f_path =============================== #
-test_save_data_path = r'H5fData/test_Data.he5' 
-test_save_label_path = r'H5fData/test_Data_label.he5' 
-test_save_patient_name_path = r'H5fData/test_name_label.he5'
+train_save_data_path = '/data3/hjh/PDRevise/02-new-h5f-DE/train_Data.he5' # h5f data path
+train_save_label_path = '/data3/hjh/PDRevise/02-new-h5f-DE/train_Data_label.he5' # h5f label path
+train_save_patient_name_path = '/data3/hjh/PDRevise/02-new-h5f-DE/train_name_label.he5' # h5f name path
+
+test_save_data_path = '/data3/hjh/PDRevise/02-new-h5f-DE/test_Data.he5'
+test_save_label_path = '/data3/hjh/PDRevise/02-new-h5f-DE/test_Data_label.he5'
+test_save_patient_name_path = '/data3/hjh/PDRevise/02-new-h5f-DE/test_name_label.he5' 
 
 class BasicDataset(Dataset):
     def __init__(self, image_path, label, data_type, transform=None):
@@ -36,8 +36,6 @@ class BasicDataset(Dataset):
         self.label = label
         self.transform = transform
         self.data_type = data_type
-        
-        # load data from h5f files
         if self.data_type == 'train':
             data_h5f = h5py.File(train_save_data_path, 'r')
             label_h5f = h5py.File(train_save_label_path, 'r')
@@ -54,7 +52,6 @@ class BasicDataset(Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        # load h5f files  
         if self.data_type == 'train':
             data_h5f = h5py.File(train_save_data_path, 'r')
             label_h5f = h5py.File(train_save_label_path, 'r')
@@ -73,5 +70,7 @@ class BasicDataset(Dataset):
         data_h5f.close()
         label_h5f.close()     
         name_h5f.close()
+        
+        data_arr = np.resize(data_arr, (1, 20, 256, 256))
         
         return data_arr, label_arr ,name_arr

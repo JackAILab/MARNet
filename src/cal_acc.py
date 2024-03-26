@@ -1,3 +1,6 @@
+
+
+
 class MyAverageMeter:
     def __init__(self):
         self.reset()
@@ -19,10 +22,10 @@ class MyAverageMeter:
     
 class GetTarget:
     def __init__(self):
-        self.TP = 0 # True positive
-        self.FP = 0 # False positive
-        self.TN = 0 # True nagative
-        self.FN = 0 # False nagative 
+        self.TP = 0 
+        self.FP = 0 
+        self.TN = 0 
+        self.FN = 0  
     def insert(self, pair):
         true = pair[0]
         pred = pair[1]
@@ -42,7 +45,7 @@ class GetTarget:
         if(self.TP+self.FP == 0): return 0
         res = self.TP/(self.TP+self.FP)
         return res
-    def getSPE(self):
+    def getSEN(self):
         if(self.TN+self.FP == 0): return 0
         res = self.TN / (self.TN+self.FP)
         return res

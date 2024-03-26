@@ -18,6 +18,8 @@ exit() # line44
 python train.py
 ```
 
+**Tips: the paths in the codes need to be modified.**
+
 ### Train
 
 1. After preparing the H5f file, we need to block the three lines of code mentioned earlier and reexecute train.py.
@@ -36,3 +38,5 @@ python train.py
 ```
 
 As the training progresses, the model will be saved to the path of `ModelLog/`
+
+**Tips: the paths in the codes need to be modified.**
