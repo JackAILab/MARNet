@@ -18,7 +18,9 @@ exit() # line135
 python test.py
 ```
 
-### Train
+**Tips: the paths in the codes need to be modified.**
+
+### Test
 
 1. After preparing the H5f file, we need to block the three lines of code mentioned earlier.
 
@@ -44,3 +46,5 @@ for modelEpoch in range(start,end,gap):
 ```
 python test.py
 ```
+
+**Tips: the paths in the codes need to be modified.**

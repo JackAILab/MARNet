@@ -37,19 +37,18 @@ In our experiments, first, we test several different models on the same dataset.
 
 <details>
 <summary><strong>Classification Prediction Results</strong> (click to expand) </summary>
-
-
- <center><img src="figures/img1.png" style="zoom: 33%;" />
+ <center><img src="assets/classification_result.png" style="zoom: 50%;" />
 </details>
+
 
 
 <details>
 <summary><strong>Ablation Experiment Results</strong> (click to expand) </summary>
-
-
- <center><img src="figures/img2.png" style="zoom: 50%;" />
+ <center><img src="assets/ablation_result.png" style="zoom: 50%;" />
 </details>
+
 
 ## Contact
 
 Should you have any question, please contact jiehuihuang1107@163.com
+
