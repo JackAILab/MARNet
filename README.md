@@ -2,7 +2,7 @@
 
 ![](./assets/1.png)
 
-## abstract
+## Abstract
 
 The severity evaluation of Parkinson’s disease (PD) is of great significance for the treatment of PD. However,
 existing methods either have limitations based on prior knowledge or are invasive methods. To propose a more
@@ -51,4 +51,12 @@ In our experiments, first, we test several different models on the same dataset.
 ## Contact
 
 Should you have any question, please contact jiehuihuang1107@163.com
+
+
+## 🚩 To-Do List
+- [x] Publish the training and inference code.
+- [x] Deploy model in the Wechat small program [壹站医](#小程序://壹站医/PugU16YM6qKtP9m) in charge of Director [Pei Zhong](https://fahsysu.org.cn/node/870) of the First Affiliated Hospital.
+- [ ] Release multi-modal diagnostic models to enhance generalization and few-shot learning capabilities.
+- [ ] Continue to collect more data and update and iterate next-generation models for early screening of large-scale PD diseases.
+
 
